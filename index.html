@@ -99,33 +99,46 @@
                 const columns = row.split('\t'); // Assuming tab-separated values
                 if (columns.length > 1) { // Check if row has data
                     const newRow = tableBody.insertRow();
-                    columns.forEach(column => {
+                    columns.forEach((column, index) => {
                         const cell = newRow.insertCell();
-                        cell.textContent = column;
+                        if (index === columns.length - 1) {
+                            // This is the Status column
+                            const statusSelect = document.createElement('select');
+                            statusSelect.innerHTML = `
+                                <option value="">Select Status</option>
+                                <option value="longterm">Long Term</option>
+                                <option value="postponed">Postponed</option>
+                                <option value="settled">Settled</option>
+                            `;
+                            statusSelect.value = column; // Set the saved status
+                            statusSelect.onchange = function() { updateStatus(this); };
+                            cell.appendChild(statusSelect);
+                        } else {
+                            cell.textContent = column;
+                        }
                     });
-                    
-                    // Add Status column
-                    const statusCell = newRow.insertCell();
-                    const statusSelect = document.createElement('select');
-                    statusSelect.innerHTML = `
-                        <option value="">Select Status</option>
-                        <option value="longterm">Long Term</option>
-                        <option value="postponed">Postponed</option>
-                        <option value="settled">Settled</option>
-                    `;
-                    statusSelect.onchange = function() { updateStatus(this); };
-                    statusCell.appendChild(statusSelect);
+                }
+            });
+
+            // Move rows to appropriate tabs based on their status
+            const allRows = tableBody.querySelectorAll('tr');
+            allRows.forEach(row => {
+                const statusSelect = row.querySelector('select');
+                if (statusSelect.value) {
+                    moveRowToTab(row, statusSelect.value);
                 }
             });
 
             // Save to local storage
-            localStorage.setItem('fixtureData', inputData);
+            updateLocalStorage();
         }
 
         function updateStatus(selectElement) {
             const row = selectElement.closest('tr');
             const status = selectElement.value;
-            moveRowToTab(row, status);
+            if (status) {
+                moveRowToTab(row, status);
+            }
         }
 
         function moveRowToTab(row, status) {
@@ -137,7 +150,16 @@
                     table.innerHTML = document.getElementById('fixtureTable').innerHTML;
                 }
                 const targetBody = table.querySelector('tbody');
+                
+                // Remove the row from its current location
+                row.parentNode.removeChild(row);
+                
+                // Append the row to the target tab
                 targetBody.appendChild(row);
+                
+                // Update the status in the row
+                const statusSelect = row.querySelector('select');
+                statusSelect.value = status;
             }
             updateLocalStorage();
         }
@@ -151,7 +173,9 @@
         function updateLocalStorage() {
             const allRows = document.querySelectorAll('#fixtureTable tbody tr, #longtermTab tbody tr, #postponedTab tbody tr, #settledTab tbody tr');
             const data = Array.from(allRows).map(row => {
-                return Array.from(row.cells).slice(0, -1).map(cell => cell.textContent).join('\t');
+                const cells = Array.from(row.cells);
+                const statusValue = cells[cells.length - 1].querySelector('select').value;
+                return cells.slice(0, -1).map(cell => cell.textContent).concat(statusValue).join('\t');
             }).join('\n');
             localStorage.setItem('fixtureData', data);
         }
