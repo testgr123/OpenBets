@@ -117,6 +117,9 @@
                     statusCell.appendChild(statusSelect);
                 }
             });
+
+            // Save to local storage
+            localStorage.setItem('fixtureData', inputData);
         }
 
         function updateStatus(selectElement) {
@@ -136,12 +139,30 @@
                 const targetBody = table.querySelector('tbody');
                 targetBody.appendChild(row);
             }
+            updateLocalStorage();
         }
 
         function showTab(tabName) {
             const tabs = document.querySelectorAll('.tab-content');
             tabs.forEach(tab => tab.classList.remove('active'));
             document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+
+        function updateLocalStorage() {
+            const allRows = document.querySelectorAll('#fixtureTable tbody tr, #longtermTab tbody tr, #postponedTab tbody tr, #settledTab tbody tr');
+            const data = Array.from(allRows).map(row => {
+                return Array.from(row.cells).slice(0, -1).map(cell => cell.textContent).join('\t');
+            }).join('\n');
+            localStorage.setItem('fixtureData', data);
+        }
+
+        // Load data on page load
+        window.onload = function() {
+            const savedData = localStorage.getItem('fixtureData');
+            if (savedData) {
+                document.getElementById('dataInput').value = savedData;
+                processData();
+            }
         }
     </script>
 </body>
