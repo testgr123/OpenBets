@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports Fixture Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        #dataInput {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 5px 10px;
+            margin-right: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sports Fixture Manager</h1>
+    
+    <textarea id="dataInput" rows="10" cols="50" placeholder="Paste fixture data here"></textarea>
+    <button onclick="processData()">Process Data</button>
+
+    <div id="tabs">
+        <button onclick="showTab('all')">All</button>
+        <button onclick="showTab('longterm')">Long Term</button>
+        <button onclick="showTab('postponed')">Postponed</button>
+        <button onclick="showTab('settled')">Settled</button>
+    </div>
+
+    <div id="allTab" class="tab-content active">
+        <table id="fixtureTable">
+            <thead>
+                <tr>
+                    <th>Provider</th>
+                    <th>Count</th>
+                    <th>Fixture ID</th>
+                    <th>Fixture Start Date</th>
+                    <th>Sport Type</th>
+                    <th>Country</th>
+                    <th>League</th>
+                    <th>Home</th>
+                    <th>Away</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="fixtureTableBody"></tbody>
+        </table>
+    </div>
+
+    <div id="longtermTab" class="tab-content">
+        <!-- Long Term fixtures will be displayed here -->
+    </div>
+
+    <div id="postponedTab" class="tab-content">
+        <!-- Postponed fixtures will be displayed here -->
+    </div>
+
+    <div id="settledTab" class="tab-content">
+        <!-- Settled fixtures will be displayed here -->
+    </div>
+
+    <script>
+        function processData() {
+            const inputData = document.getElementById('dataInput').value;
+            const rows = inputData.split('\n');
+            const tableBody = document.getElementById('fixtureTableBody');
+            
+            tableBody.innerHTML = ''; // Clear existing data
+            
+            rows.forEach(row => {
+                const columns = row.split('\t'); // Assuming tab-separated values
+                if (columns.length > 1) { // Check if row has data
+                    const newRow = tableBody.insertRow();
+                    columns.forEach(column => {
+                        const cell = newRow.insertCell();
+                        cell.textContent = column;
+                    });
+                    
+                    // Add Status column
+                    const statusCell = newRow.insertCell();
+                    const statusSelect = document.createElement('select');
+                    statusSelect.innerHTML = `
+                        <option value="">Select Status</option>
+                        <option value="longterm">Long Term</option>
+                        <option value="postponed">Postponed</option>
+                        <option value="settled">Settled</option>
+                    `;
+                    statusSelect.onchange = function() { updateStatus(this); };
+                    statusCell.appendChild(statusSelect);
+                }
+            });
+        }
+
+        function updateStatus(selectElement) {
+            const row = selectElement.closest('tr');
+            const status = selectElement.value;
+            moveRowToTab(row, status);
+        }
+
+        function moveRowToTab(row, status) {
+            const targetTab = document.getElementById(status + 'Tab');
+            if (targetTab) {
+                let table = targetTab.querySelector('table');
+                if (!table) {
+                    table = targetTab.appendChild(document.createElement('table'));
+                    table.innerHTML = document.getElementById('fixtureTable').innerHTML;
+                }
+                const targetBody = table.querySelector('tbody');
+                targetBody.appendChild(row);
+            }
+        }
+
+        function showTab(tabName) {
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+    </script>
+</body>
+</html>
